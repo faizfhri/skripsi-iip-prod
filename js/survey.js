@@ -9,6 +9,7 @@ let surveyData = {};
 
 const sections = [
     'section-intro',
+    'section-info',
     'section-consent',
     'section-demografi',
     'section-experience',
@@ -28,13 +29,38 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeConsentCheckboxes() {
     const checkboxes = document.querySelectorAll('.consent-checkbox');
     const consentBtn = document.getElementById('consentBtn');
+    const finalConsentRadios = document.querySelectorAll('input[name="final-consent"]');
     
+    // Check all checkboxes
     checkboxes.forEach(checkbox => {
-        checkbox.addEventListener('change', function() {
-            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-            consentBtn.disabled = !allChecked;
-        });
+        checkbox.addEventListener('change', updateConsentButton);
     });
+    
+    // Check final consent radio
+    finalConsentRadios.forEach(radio => {
+        radio.addEventListener('change', updateConsentButton);
+    });
+    
+    function updateConsentButton() {
+        const allCheckboxesChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const finalConsent = document.querySelector('input[name="final-consent"]:checked')?.value;
+        
+        // Enable button only if all checkboxes are checked AND "Bersedia" is selected
+        consentBtn.disabled = !(allCheckboxesChecked && finalConsent === 'Bersedia');
+    }
+}
+
+function validateConsentAndNext() {
+    const finalConsent = document.querySelector('input[name="final-consent"]:checked')?.value;
+    
+    if (finalConsent === 'Tidak Bersedia') {
+        alert('Anda memilih "Saya Tidak Bersedia". Terima kasih atas pertimbangan Anda.');
+        // Redirect atau close window
+        window.location.href = 'about:blank';
+        return;
+    }
+    
+    nextSection();
 }
 
 // ===== NAVIGATION =====
@@ -133,19 +159,19 @@ function validateDemografiAndNext() {
     
     // Check age range
     if (usia < 18 || usia > 40) {
-        showDisqualified();
+        showDisqualified('age', usia);
         return;
     }
     
     // Check marketing experience
     if (marketingExp === 'Ya') {
-        showDisqualified();
+        showDisqualified('marketing');
         return;
     }
     
     // Check digital media usage
     if (digitalActive === 'Tidak') {
-        showDisqualified();
+        showDisqualified('digital');
         return;
     }
     
@@ -153,10 +179,29 @@ function validateDemografiAndNext() {
     nextSection();
 }
 
-function showDisqualified() {
+function showDisqualified(reason, ageValue = null) {
     document.getElementById(sections[currentSection]).classList.remove('active');
     currentSection = sections.indexOf('section-disqualified');
     document.getElementById('section-disqualified').classList.add('active');
+    
+    // Set reason message
+    const reasonElement = document.getElementById('disqualifiedReason');
+    let reasonText = '';
+    
+    if (reason === 'age') {
+        if (ageValue < 18) {
+            reasonText = `<p><strong>Alasan:</strong> Penelitian ini ditujukan untuk responden berusia 18-40 tahun. Usia Anda saat ini ${ageValue} tahun.</p>`;
+        } else {
+            reasonText = `<p><strong>Alasan:</strong> Penelitian ini ditujukan untuk responden berusia 18-40 tahun. Usia Anda saat ini ${ageValue} tahun.</p>`;
+        }
+    } else if (reason === 'marketing') {
+        reasonText = '<p><strong>Alasan:</strong> Penelitian ini membutuhkan responden yang tidak memiliki latar belakang atau pengalaman bekerja di bidang marketing/pemasaran untuk menghindari bias dalam hasil penelitian.</p>';
+    } else if (reason === 'digital') {
+        reasonText = '<p><strong>Alasan:</strong> Penelitian ini membutuhkan responden yang aktif menggunakan media digital (media sosial, website, aplikasi mobile) karena stimulus yang ditampilkan berkaitan dengan konten digital.</p>';
+    }
+    
+    reasonElement.innerHTML = reasonText;
+    
     updateProgressBar();
     window.scrollTo(0, 0);
 }
@@ -184,6 +229,30 @@ function startStimulusTimer() {
     }, 1000);
 }
 
+// ===== COUNTDOWN OVERLAY =====
+function showCountdown(seconds) {
+    return new Promise((resolve) => {
+        const overlay = document.getElementById('countdownOverlay');
+        const numberEl = document.getElementById('countdownNumber');
+        let timeLeft = seconds;
+        
+        overlay.classList.add('active');
+        numberEl.textContent = timeLeft;
+        
+        const countdown = setInterval(() => {
+            timeLeft--;
+            
+            if (timeLeft > 0) {
+                numberEl.textContent = timeLeft;
+            } else {
+                clearInterval(countdown);
+                overlay.classList.remove('active');
+                resolve();
+            }
+        }, 1000);
+    });
+}
+
 // ===== STRATIFIED RANDOM ASSIGNMENT =====
 async function assignGroupAndShowStimulus() {
     // Validasi dulu
@@ -204,6 +273,14 @@ async function assignGroupAndShowStimulus() {
         return;
     }
 
+    // Disable button to prevent double click
+    const nextBtn = document.getElementById('experienceNextBtn');
+    nextBtn.disabled = true;
+    nextBtn.textContent = 'Memproses...';
+
+    // Show 3 second countdown
+    await showCountdown(3);
+
     // Show loading
     showLoading(true, 'Memproses assignment kelompok...');
 
@@ -211,8 +288,8 @@ async function assignGroupAndShowStimulus() {
     const gender = document.querySelector('input[name="gender"]:checked').value;
     const purchaseExp = document.querySelector('input[name="purchase-exp"]:checked').value;
     
-    // Tentukan strata
-    const strata = `${gender === 'Laki-laki' ? 'L' : 'P'}-${purchaseExp === 'Pernah' ? 'Pernah' : 'Belum'}`;
+    // Tentukan strata: Gender (L/P) x Purchase Experience (Ya/Tidak)
+    const strata = `${gender === 'Laki-laki' ? 'L' : 'P'}-${purchaseExp === 'Ya' ? 'Ya' : 'Tidak'}`;
     
     try {
         // Request assignment dari server
@@ -231,6 +308,11 @@ async function assignGroupAndShowStimulus() {
             surveyData.kelompok_stimulus = assignedGroup;
             
             showLoading(false);
+            
+            // Re-enable button
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'Lanjutkan';
+            
             nextSection();
         } else {
             throw new Error('Failed to get group assignment');
@@ -247,6 +329,11 @@ async function assignGroupAndShowStimulus() {
         surveyData.kelompok_stimulus = assignedGroup;
         
         showLoading(false);
+        
+        // Re-enable button
+        nextBtn.disabled = false;
+        nextBtn.textContent = 'Lanjutkan';
+        
         nextSection();
     }
 }
@@ -286,17 +373,19 @@ async function submitSurvey() {
         
         // Data Diri
         nama: document.getElementById('nama').value,
+        email: document.getElementById('email').value,
         usia: document.getElementById('usia').value,
         jenis_kelamin: document.querySelector('input[name="gender"]:checked').value,
-        pendidikan: document.getElementById('pendidikan').value,
-        pekerjaan: document.getElementById('pekerjaan').value,
         pengalaman_marketing: document.querySelector('input[name="marketing-exp"]:checked').value,
         aktif_media_digital: document.querySelector('input[name="digital-active"]:checked').value,
         
-        // Pengalaman Membeli
-        frekuensi_online: document.querySelector('input[name="freq-online"]:checked').value,
-        pengalaman_beli: document.querySelector('input[name="purchase-exp"]:checked').value,
-        faktor_keputusan: document.querySelector('input[name="decision-factor"]:checked').value,
+        // Pengalaman Membeli Produk Berkonsep Donasi
+        pernah_lihat_iklan_digital: document.querySelector('input[name="lihat-iklan"]:checked').value,
+        frekuensi_lihat_iklan_digital: document.querySelector('input[name="freq-iklan"]:checked').value,
+        pernah_lihat_iklan_donasi: document.querySelector('input[name="lihat-iklan-donasi"]:checked').value,
+        frekuensi_lihat_iklan_donasi: document.querySelector('input[name="freq-iklan-donasi"]:checked').value,
+        pernah_beli_produk_donasi: document.querySelector('input[name="purchase-exp"]:checked').value,
+        jenis_produk_donasi: document.getElementById('jenis-produk').value,
         
         // Assignment
         strata: surveyData.strata,
