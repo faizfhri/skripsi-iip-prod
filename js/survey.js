@@ -46,8 +46,8 @@ function initializeConsentCheckboxes() {
         const allCheckboxesChecked = Array.from(checkboxes).every(cb => cb.checked);
         const finalConsent = document.querySelector('input[name="final-consent"]:checked')?.value;
         
-        // Enable button only if all checkboxes are checked AND "Bersedia" is selected
-        consentBtn.disabled = !(allCheckboxesChecked && finalConsent === 'Bersedia');
+        // Enable button if all checkboxes are checked AND any final consent is selected
+        consentBtn.disabled = !(allCheckboxesChecked && finalConsent);
     }
 }
 
@@ -55,9 +55,7 @@ function validateConsentAndNext() {
     const finalConsent = document.querySelector('input[name="final-consent"]:checked')?.value;
     
     if (finalConsent === 'Tidak Bersedia') {
-        alert('Anda memilih "Saya Tidak Bersedia". Terima kasih atas pertimbangan Anda.');
-        // Redirect atau close window
-        window.location.href = 'about:blank';
+        showDisqualified('consent');
         return;
     }
     
@@ -206,22 +204,11 @@ function initializeScreeningValidation() {
 }
 
 function updateNextButton(button) {
-    const allValid = screeningValidation.age && 
-                     screeningValidation.marketing && 
-                     screeningValidation.digital;
-    
-    if (allValid) {
-        button.disabled = false;
-        button.style.opacity = '1';
-        button.style.cursor = 'pointer';
-    } else {
-        button.disabled = true;
-        button.style.opacity = '0.5';
-        button.style.cursor = 'not-allowed';
-    }
+    // Always keep button enabled, validation will redirect to disqualified page if needed
+    // Error messages are shown inline for user awareness
 }
 
-// ===== SCREENING VALIDATION (simplified) =====
+// ===== SCREENING VALIDATION =====
 function validateDemografiAndNext() {
     const section = document.getElementById('section-demografi');
     const inputs = section.querySelectorAll('input[required], select[required]');
@@ -249,7 +236,30 @@ function validateDemografiAndNext() {
         return;
     }
     
-    // All validation already done real-time, just proceed
+    // Check screening criteria - redirect to disqualified if not met
+    const usia = parseInt(document.getElementById('usia').value);
+    const marketingExp = document.querySelector('input[name="marketing-exp"]:checked')?.value;
+    const digitalActive = document.querySelector('input[name="digital-active"]:checked')?.value;
+    
+    // Check age range
+    if (usia < 18 || usia > 40) {
+        showDisqualified('age', usia);
+        return;
+    }
+    
+    // Check marketing experience
+    if (marketingExp === 'Ya') {
+        showDisqualified('marketing');
+        return;
+    }
+    
+    // Check digital media usage
+    if (digitalActive === 'Tidak') {
+        showDisqualified('digital');
+        return;
+    }
+    
+    // Pass all screening
     nextSection();
 }
 
@@ -262,7 +272,9 @@ function showDisqualified(reason, ageValue = null) {
     const reasonElement = document.getElementById('disqualifiedReason');
     let reasonText = '';
     
-    if (reason === 'age') {
+    if (reason === 'consent') {
+        reasonText = '<p><strong>Alasan:</strong> Anda memilih "Saya Tidak Bersedia" untuk berpartisipasi dalam penelitian ini. Partisipasi dalam penelitian ini bersifat sukarela dan memerlukan persetujuan Anda.</p>';
+    } else if (reason === 'age') {
         if (ageValue < 18) {
             reasonText = `<p><strong>Alasan:</strong> Penelitian ini ditujukan untuk responden berusia 18-40 tahun. Usia Anda saat ini ${ageValue} tahun.</p>`;
         } else {
