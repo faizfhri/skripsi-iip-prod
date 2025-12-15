@@ -81,7 +81,8 @@
 
                 <div class="form-group">
                     <label for="usia">Usia <span class="required">*</span></label>
-                    <input type="number" id="usia" class="form-control" min="17" max="100" required>
+                    <input type="number" id="usia" class="form-control" min="18" max="40" required>
+                    <small style="color: #6c757d; margin-top: 5px; display: block;">Penelitian ini ditujukan untuk usia 18-40 tahun</small>
                 </div>
 
                 <div class="form-group">
@@ -114,10 +115,38 @@
                     <label for="pekerjaan">Pekerjaan <span class="required">*</span></label>
                     <input type="text" id="pekerjaan" class="form-control" required>
                 </div>
+
+                <div class="form-group">
+                    <label>Apakah Anda memiliki pengalaman bekerja di bidang marketing/pemasaran? <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="marketing-exp" value="Tidak" required>
+                            <span>Tidak</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="marketing-exp" value="Ya" required>
+                            <span>Ya</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Apakah Anda aktif menggunakan media digital (media sosial, website, aplikasi mobile)? <span class="required">*</span></label>
+                    <div class="radio-group">
+                        <label class="radio-item">
+                            <input type="radio" name="digital-active" value="Ya" required>
+                            <span>Ya</span>
+                        </label>
+                        <label class="radio-item">
+                            <input type="radio" name="digital-active" value="Tidak" required>
+                            <span>Tidak</span>
+                        </label>
+                    </div>
+                </div>
             </div>
             <div class="button-group">
                 <button class="btn-secondary" onclick="prevSection()">Kembali</button>
-                <button class="btn-primary" onclick="validateAndNext('section-demografi')">Lanjutkan</button>
+                <button class="btn-primary" onclick="validateDemografiAndNext()">Lanjutkan</button>
             </div>
         </section>
 
@@ -307,7 +336,17 @@
             </div>
         </section>
 
-        <!-- Section 7: Thank You -->
+        <!-- Section 7: Disqualified -->
+        <section id="section-disqualified" class="section">
+            <div class="thankyou-container">
+                <div class="thankyou-icon" style="background: #dc3545;">✕</div>
+                <h1 style="color: #dc3545;">Mohon Maaf</h1>
+                <p>Anda tidak dapat berpartisipasi dalam penelitian ini.</p>
+                <p class="thankyou-note">Terima kasih atas waktu dan perhatian Anda.</p>
+            </div>
+        </section>
+
+        <!-- Section 8: Thank You -->
         <section id="section-thankyou" class="section">
             <div class="thankyou-container">
                 <div class="thankyou-icon">✓</div>

@@ -14,6 +14,7 @@ const sections = [
     'section-experience',
     'section-stimulus',
     'section-scale',
+    'section-disqualified',
     'section-thankyou'
 ];
 
@@ -97,6 +98,69 @@ function validateAndNext(sectionId) {
     }
 }
 
+// ===== SCREENING VALIDATION =====
+function validateDemografiAndNext() {
+    const section = document.getElementById('section-demografi');
+    const inputs = section.querySelectorAll('input[required], select[required]');
+    let isValid = true;
+    
+    inputs.forEach(input => {
+        if (input.type === 'radio') {
+            const radioGroup = section.querySelectorAll(`input[name="${input.name}"]`);
+            const isChecked = Array.from(radioGroup).some(radio => radio.checked);
+            if (!isChecked) {
+                isValid = false;
+            }
+        } else if (input.type === 'text' || input.type === 'number' || input.tagName === 'SELECT') {
+            if (!input.value || input.value.trim() === '') {
+                isValid = false;
+                input.style.borderColor = '#dc3545';
+            } else {
+                input.style.borderColor = '#dee2e6';
+            }
+        }
+    });
+    
+    if (!isValid) {
+        alert('Mohon lengkapi semua pertanyaan yang bertanda (*) wajib diisi.');
+        return;
+    }
+    
+    // Screening criteria
+    const usia = parseInt(document.getElementById('usia').value);
+    const marketingExp = document.querySelector('input[name="marketing-exp"]:checked')?.value;
+    const digitalActive = document.querySelector('input[name="digital-active"]:checked')?.value;
+    
+    // Check age range
+    if (usia < 18 || usia > 40) {
+        showDisqualified();
+        return;
+    }
+    
+    // Check marketing experience
+    if (marketingExp === 'Ya') {
+        showDisqualified();
+        return;
+    }
+    
+    // Check digital media usage
+    if (digitalActive === 'Tidak') {
+        showDisqualified();
+        return;
+    }
+    
+    // Pass all screening
+    nextSection();
+}
+
+function showDisqualified() {
+    document.getElementById(sections[currentSection]).classList.remove('active');
+    currentSection = sections.indexOf('section-disqualified');
+    document.getElementById('section-disqualified').classList.add('active');
+    updateProgressBar();
+    window.scrollTo(0, 0);
+}
+
 // ===== STIMULUS TIMER =====
 function startStimulusTimer() {
     const timerDisplay = document.getElementById('timerDisplay');
@@ -140,6 +204,9 @@ async function assignGroupAndShowStimulus() {
         return;
     }
 
+    // Show loading
+    showLoading(true, 'Memproses assignment kelompok...');
+
     // Ambil data untuk stratifikasi
     const gender = document.querySelector('input[name="gender"]:checked').value;
     const purchaseExp = document.querySelector('input[name="purchase-exp"]:checked').value;
@@ -163,6 +230,7 @@ async function assignGroupAndShowStimulus() {
             surveyData.strata = strata;
             surveyData.kelompok_stimulus = assignedGroup;
             
+            showLoading(false);
             nextSection();
         } else {
             throw new Error('Failed to get group assignment');
@@ -178,6 +246,7 @@ async function assignGroupAndShowStimulus() {
         surveyData.strata = strata;
         surveyData.kelompok_stimulus = assignedGroup;
         
+        showLoading(false);
         nextSection();
     }
 }
@@ -221,6 +290,8 @@ async function submitSurvey() {
         jenis_kelamin: document.querySelector('input[name="gender"]:checked').value,
         pendidikan: document.getElementById('pendidikan').value,
         pekerjaan: document.getElementById('pekerjaan').value,
+        pengalaman_marketing: document.querySelector('input[name="marketing-exp"]:checked').value,
+        aktif_media_digital: document.querySelector('input[name="digital-active"]:checked').value,
         
         // Pengalaman Membeli
         frekuensi_online: document.querySelector('input[name="freq-online"]:checked').value,
@@ -265,9 +336,11 @@ async function submitSurvey() {
     }
 }
 
-function showLoading(show) {
+function showLoading(show, message = 'Mengirim data...') {
     const overlay = document.getElementById('loadingOverlay');
+    const loadingText = overlay.querySelector('p');
     if (show) {
+        loadingText.textContent = message;
         overlay.classList.add('active');
     } else {
         overlay.classList.remove('active');
