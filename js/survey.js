@@ -412,7 +412,13 @@ async function submitSurvey() {
 
         // no-cors mode tidak return response, jadi assume success
         showLoading(false);
-        nextSection(); // Go to thank you page
+        
+        // Go directly to thank you page
+        document.getElementById(sections[currentSection]).classList.remove('active');
+        currentSection = sections.indexOf('section-thankyou');
+        document.getElementById('section-thankyou').classList.add('active');
+        updateProgressBar();
+        window.scrollTo(0, 0);
         
     } catch (error) {
         console.error('Error:', error);
