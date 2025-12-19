@@ -2,7 +2,7 @@
 // Deploy ini sebagai Web App di Google Apps Script
 
 // KONFIGURASI
-const SPREADSHEET_ID = '1zMtqskWmZD9bXQ6wkS1sSipjzbBQalV0aS5riFU7IKM'; // Ganti dengan ID Google Sheets kamu
+const SPREADSHEET_ID = 'YOUR_SPREADSHEET_ID_HERE'; // Ganti dengan ID Google Sheets kamu
 const SHEET_NAME = 'Responses'; // Nama sheet untuk data responses
 const TRACKING_SHEET_NAME = 'Tracking'; // Nama sheet untuk tracking assignment
 
@@ -151,24 +151,32 @@ function saveToSheet(data) {
 function createResponseSheet(ss) {
   const sheet = ss.insertSheet(SHEET_NAME);
   
-  // Set headers
+  // Set headers - updated for new structure with phone, ewallet, and response fields
   const headers = [
     'timestamp',
     'nama',
+    'email',
     'usia',
     'jenis_kelamin',
-    'pendidikan',
-    'pekerjaan',
-    'frekuensi_online',
-    'pengalaman_beli',
-    'faktor_keputusan',
+    'nomor_telepon',
+    'tujuan_ewallet',
+    'pengalaman_marketing',
+    'aktif_media_digital',
+    'pernah_lihat_iklan_digital',
+    'frekuensi_lihat_iklan_digital',
+    'pernah_lihat_iklan_donasi',
+    'frekuensi_lihat_iklan_donasi',
+    'pernah_beli_produk_donasi',
+    'jenis_produk_donasi',
     'strata',
     'kelompok_stimulus',
     'scale1_tidak_pernah_pasti_berniat',
     'scale2_jelas_tidak_jelas_berniat',
     'scale3_minat_sangat_rendah_tinggi',
     'scale4_jelas_tidak_jelas_akan_beli',
-    'scale5_mungkin_tidak_mungkin_beli'
+    'scale5_mungkin_tidak_mungkin_beli',
+    'response1_tersentuh',
+    'response2_manfaat'
   ];
   
   sheet.getRange(1, 1, 1, headers.length).setValues([headers]);
@@ -214,12 +222,12 @@ function createTrackingSheet(ss) {
   sheet.setColumnWidth(3, 100);
   sheet.setColumnWidth(4, 100);
   
-  // Add initial strata rows
+  // Add initial strata rows - updated to Ya/Tidak
   const strata = [
-    'L-Belum',
-    'L-Pernah',
-    'P-Belum',
-    'P-Pernah'
+    'L-Tidak',
+    'L-Ya',
+    'P-Tidak',
+    'P-Ya'
   ];
   
   strata.forEach(s => {
@@ -294,7 +302,7 @@ function getSummaryStats() {
 // ===== MANUAL TESTING FUNCTIONS =====
 
 function testGetAssignment() {
-  const result = getGroupAssignment('L-Pernah');
+  const result = getGroupAssignment('L-Ya');
   Logger.log(result.getContent());
 }
 
@@ -302,14 +310,18 @@ function testSaveData() {
   const testData = {
     timestamp: new Date().toISOString(),
     nama: 'Test User',
+    email: 'test@example.com',
     usia: '25',
     jenis_kelamin: 'Laki-laki',
-    pendidikan: 'S1',
-    pekerjaan: 'Mahasiswa',
-    frekuensi_online: 'Sering',
-    pengalaman_beli: 'Pernah',
-    faktor_keputusan: 'Harga',
-    strata: 'L-Pernah',
+    pengalaman_marketing: 'Tidak',
+    aktif_media_digital: 'Ya',
+    pernah_lihat_iklan_digital: 'Ya',
+    frekuensi_lihat_iklan_digital: '6–10',
+    pernah_lihat_iklan_donasi: 'Ya',
+    frekuensi_lihat_iklan_donasi: '0–5',
+    pernah_beli_produk_donasi: 'Ya',
+    jenis_produk_donasi: 'Produk skincare',
+    strata: 'L-Ya',
     kelompok_stimulus: 'A',
     scale1_tidak_pernah_pasti_berniat: '5',
     scale2_jelas_tidak_jelas_berniat: '6',

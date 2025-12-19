@@ -15,6 +15,7 @@ const sections = [
     'section-experience',
     'section-stimulus',
     'section-scale',
+    'section-response',
     'section-disqualified',
     'section-thankyou'
 ];
@@ -431,22 +432,22 @@ function fallbackRandomAssignment() {
 
 // ===== SUBMIT SURVEY =====
 async function submitSurvey() {
-    // Validasi skala pengukuran
-    const scaleSection = document.getElementById('section-scale');
-    const scaleInputs = scaleSection.querySelectorAll('input[type="radio"]');
-    let allScalesAnswered = true;
+    // Validasi skala response
+    const responseSection = document.getElementById('section-response');
+    const responseInputs = responseSection.querySelectorAll('input[type="radio"]');
+    let allResponsesAnswered = true;
     
-    for (let i = 1; i <= 5; i++) {
-        const scaleName = `scale${i}`;
-        const isAnswered = scaleSection.querySelector(`input[name="${scaleName}"]:checked`);
+    for (let i = 1; i <= 2; i++) {
+        const responseName = `response${i}`;
+        const isAnswered = responseSection.querySelector(`input[name="${responseName}"]:checked`);
         if (!isAnswered) {
-            allScalesAnswered = false;
+            allResponsesAnswered = false;
             break;
         }
     }
     
-    if (!allScalesAnswered) {
-        alert('Mohon lengkapi semua skala penilaian.');
+    if (!allResponsesAnswered) {
+        alert('Mohon lengkapi semua pertanyaan tanggapan terhadap poster.');
         return;
     }
 
@@ -468,6 +469,8 @@ async function submitSurvey() {
         email: document.getElementById('email').value,
         usia: document.getElementById('usia').value,
         jenis_kelamin: document.querySelector('input[name="gender"]:checked').value,
+        nomor_telepon: document.getElementById('nomor-telepon').value,
+        tujuan_ewallet: document.querySelector('input[name="ewallet"]:checked').value,
         pengalaman_marketing: document.querySelector('input[name="marketing-exp"]:checked').value,
         aktif_media_digital: document.querySelector('input[name="digital-active"]:checked').value,
         
@@ -488,7 +491,11 @@ async function submitSurvey() {
         scale2_jelas_tidak_jelas_berniat: document.querySelector('input[name="scale2"]:checked').value,
         scale3_minat_sangat_rendah_tinggi: document.querySelector('input[name="scale3"]:checked').value,
         scale4_jelas_tidak_jelas_akan_beli: document.querySelector('input[name="scale4"]:checked').value,
-        scale5_mungkin_tidak_mungkin_beli: document.querySelector('input[name="scale5"]:checked').value
+        scale5_mungkin_tidak_mungkin_beli: document.querySelector('input[name="scale5"]:checked').value,
+        
+        // Tanggapan Terhadap Poster
+        response1_tersentuh: document.querySelector('input[name="response1"]:checked').value,
+        response2_manfaat: document.querySelector('input[name="response2"]:checked').value
     };
 
     try {
