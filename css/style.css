@@ -244,15 +244,22 @@ h2 {
 
 .stimulus-container img {
     max-width: 100%;
-    width: 90%;
+    width: 100%;
     height: auto;
     border-radius: 8px;
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
 }
 
 @media (max-width: 768px) {
+    .stimulus-container {
+        padding: 15px;
+        margin: 10px -15px;
+    }
+    
     .stimulus-container img {
         width: 100%;
+        max-width: 100%;
+        border-radius: 4px;
     }
 }
 
