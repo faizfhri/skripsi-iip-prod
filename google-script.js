@@ -76,7 +76,6 @@ function getGroupAssignment(strata) {
     
     // Assign ke group dengan count paling sedikit
     let assignedGroup;
-    let updateColumn;
     
     const minCount = Math.min(countA, countB, countC);
     
@@ -92,22 +91,17 @@ function getGroupAssignment(strata) {
       assignedGroup = 'C';
     }
     
-    // Update count
-    if (assignedGroup === 'A') updateColumn = 2;
-    else if (assignedGroup === 'B') updateColumn = 3;
-    else updateColumn = 4;
-    
-    const currentCount = trackingSheet.getRange(strataRow + 1, updateColumn).getValue();
-    trackingSheet.getRange(strataRow + 1, updateColumn).setValue(currentCount + 1);
+    // TIDAK update count di sini - akan diupdate saat submit
+    // Ini mencegah tracking count > responses count (kalau user ga submit)
     
     return ContentService.createTextOutput(JSON.stringify({
       success: true,
       group: assignedGroup,
       strata: strata,
       counts: {
-        A: assignedGroup === 'A' ? countA + 1 : countA,
-        B: assignedGroup === 'B' ? countB + 1 : countB,
-        C: assignedGroup === 'C' ? countC + 1 : countC
+        A: countA,
+        B: countB,
+        C: countC
       }
     })).setMimeType(ContentService.MimeType.JSON);
     
@@ -144,6 +138,52 @@ function saveToSheet(data) {
   // Format timestamp
   const lastRow = sheet.getLastRow();
   sheet.getRange(lastRow, 1).setNumberFormat('dd/mm/yyyy hh:mm:ss');
+  
+  // Update tracking count SETELAH data tersimpan
+  updateTracking(ss, data.strata, data.kelompok_stimulus);
+}
+
+// ===== UPDATE TRACKING =====
+
+function updateTracking(ss, strata, group) {
+  try {
+    let trackingSheet = ss.getSheetByName(TRACKING_SHEET_NAME);
+    
+    // Buat tracking sheet jika belum ada
+    if (!trackingSheet) {
+      trackingSheet = createTrackingSheet(ss);
+    }
+    
+    // Find strata row
+    const data = trackingSheet.getDataRange().getValues();
+    let strataRow = -1;
+    
+    for (let i = 1; i < data.length; i++) {
+      if (data[i][0] === strata) {
+        strataRow = i;
+        break;
+      }
+    }
+    
+    // Jika strata belum ada, buat baris baru
+    if (strataRow === -1) {
+      trackingSheet.appendRow([strata, 0, 0, 0]);
+      strataRow = trackingSheet.getLastRow() - 1;
+    }
+    
+    // Update count untuk group yang sesuai
+    let updateColumn;
+    if (group === 'A') updateColumn = 2;
+    else if (group === 'B') updateColumn = 3;
+    else updateColumn = 4;
+    
+    const currentCount = trackingSheet.getRange(strataRow + 1, updateColumn).getValue();
+    trackingSheet.getRange(strataRow + 1, updateColumn).setValue(currentCount + 1);
+    
+  } catch (error) {
+    // Log error tapi jangan fail keseluruhan save
+    Logger.log('Error updating tracking: ' + error.toString());
+  }
 }
 
 // ===== INITIALIZE SHEETS =====

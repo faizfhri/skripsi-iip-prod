@@ -124,6 +124,28 @@ function validateAndNext(sectionId) {
     }
 }
 
+// ===== SCALE VALIDATION (Section 7 - Minat Membeli) =====
+function validateScaleAndNext() {
+    const scaleSection = document.getElementById('section-scale');
+    let allScalesAnswered = true;
+    
+    for (let i = 1; i <= 5; i++) {
+        const scaleName = `scale${i}`;
+        const isAnswered = scaleSection.querySelector(`input[name="${scaleName}"]:checked`);
+        if (!isAnswered) {
+            allScalesAnswered = false;
+            break;
+        }
+    }
+    
+    if (!allScalesAnswered) {
+        alert('Mohon lengkapi semua skala penilaian minat membeli (1-5).');
+        return;
+    }
+    
+    nextSection();
+}
+
 // ===== REAL-TIME SCREENING VALIDATION =====
 let screeningValidation = {
     age: false,
